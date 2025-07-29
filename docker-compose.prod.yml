@@ -31,6 +31,8 @@ services:
       - "5900:5900"
       # Winbox
       - "8291:8291"
+      # WireGuard standard port
+      - "51820:51820/udp"
     environment:
       - ROUTEROS_VERSION=${ROUTEROS_VERSION:-7.19.4}
     volumes:
