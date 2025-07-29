@@ -63,9 +63,17 @@ jobs:
                   # Deploy RouterOS container
                   ssh $SERVER_USER@$SERVER_HOST "cd /opt/docker-routeros && \
                       export ROUTEROS_VERSION=$ROUTEROS_VERSION && \
-                      docker compose down || true && \
-                      docker compose build --build-arg ROUTEROS_VERSION=$ROUTEROS_VERSION && \
-                      docker compose up -d"
+                      # Check if KVM is available
+                      if [ -e /dev/kvm ]; then \
+                          echo 'Using KVM-enabled configuration' && \
+                          COMPOSE_FILE='docker-compose.prod.yml'; \
+                      else \
+                          echo 'KVM not available, using no-KVM configuration' && \
+                          COMPOSE_FILE='docker-compose.no-kvm.yml'; \
+                      fi && \
+                      docker compose -f \$COMPOSE_FILE down || true && \
+                      docker compose -f \$COMPOSE_FILE build --build-arg ROUTEROS_VERSION=$ROUTEROS_VERSION && \
+                      docker compose -f \$COMPOSE_FILE up -d"
                   
                   # Wait for container to start and verify
                   ssh $SERVER_USER@$SERVER_HOST "sleep 30 && docker ps | grep routeros || exit 1"
