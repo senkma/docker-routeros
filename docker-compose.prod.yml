@@ -1,0 +1,64 @@
+version: "3.8"
+
+services:
+  routeros:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        ROUTEROS_VERSION: ${ROUTEROS_VERSION:-7.19.4}
+    container_name: routeros-prod
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+      - /dev/kvm
+    ports:
+      # SSH access
+      - "2222:22"
+      # Telnet
+      - "2223:23"
+      # HTTP
+      - "8080:80"
+      # HTTPS
+      - "8443:443"
+      # RouterOS API
+      - "8728:8728"
+      # RouterOS API SSL
+      - "8729:8729"
+      # VNC access (only for maintenance, consider removing in production)
+      - "5900:5900"
+      # Winbox
+      - "8291:8291"
+    environment:
+      - ROUTEROS_VERSION=${ROUTEROS_VERSION:-7.19.4}
+    volumes:
+      # Persist RouterOS configuration
+      - routeros_prod_data:/routeros
+      # Backup location
+      - ./backups:/backups
+    networks:
+      - routeros_prod_net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "22"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  routeros_prod_data:
+    driver: local
+
+networks:
+  routeros_prod_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16

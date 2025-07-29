@@ -16,7 +16,7 @@ RUN set -xe \
     && apk add --no-cache --update \
     netcat-openbsd qemu-x86_64 qemu-system-x86_64 \
     busybox-extras iproute2 iputils \
-    bridge-utils iptables jq bash python3
+    bridge-utils iptables jq bash python3 curl
 
 # Environments which may be change
 ARG ROUTEROS_VERSION
@@ -24,8 +24,9 @@ ENV ROUTEROS_VERSION=${ROUTEROS_VERSION}
 ENV ROUTEROS_IMAGE="chr-${ROUTEROS_VERSION}.vdi"
 ENV ROUTEROS_PATH="https://cdn.mikrotik.com/routeros/${ROUTEROS_VERSION}/${ROUTEROS_IMAGE}.zip"
 
-# Download VDI image from remote site
-RUN wget "$ROUTEROS_PATH" -O "/routeros_source/${ROUTEROS_IMAGE}.zip" && \
+# Download VDI image from remote site using curl with DNS servers
+RUN curl --dns-servers 8.8.8.8,1.1.1.1 --connect-timeout 30 --retry 3 \
+    "$ROUTEROS_PATH" -o "/routeros_source/${ROUTEROS_IMAGE}.zip" && \
     unzip "/routeros_source/${ROUTEROS_IMAGE}.zip" -d "/routeros_source" && \
     rm -f "/routeros_source/${ROUTEROS_IMAGE}.zip"
 

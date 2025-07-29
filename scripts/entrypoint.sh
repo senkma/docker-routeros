@@ -46,11 +46,14 @@ udhcpd -I $DUMMY_DHCPD_IP -f $DHCPD_CONF_FILE &
 
 CPU_FEATURES=""
 KVM_OPTS=""
+CPU_MODEL="qemu64"
+
 if [ -e /dev/kvm ]; then
    if grep -q -e vmx -e svm /proc/cpuinfo; then
       echo "Enabling KVM"
       CPU_FEATURES=",kvm=on"
       KVM_OPTS="-machine accel=kvm -enable-kvm"
+      CPU_MODEL="host"
    fi
 fi
 
@@ -70,7 +73,7 @@ exec qemu-system-x86_64 \
    -nographic \
    -m 512 \
    -smp 4,sockets=1,cores=4,threads=1 \
-   -cpu host$CPU_FEATURES \
+   -cpu $CPU_MODEL$CPU_FEATURES \
    $KVM_OPTS \
    -nic tap,id=qemu1,mac=54:05:AB:CD:12:31,script=$QEMU_IFUP,downscript=$QEMU_IFDOWN \
    "$@" \

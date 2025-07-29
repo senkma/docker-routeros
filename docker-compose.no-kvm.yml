@@ -1,0 +1,50 @@
+version: "3.8"
+
+services:
+  routeros:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        ROUTEROS_VERSION: "7.19.4"
+    container_name: routeros-local-no-kvm
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    ports:
+      # SSH access
+      - "2222:22"
+      # Telnet
+      - "2223:23"
+      # HTTP
+      - "8080:80"
+      # HTTPS
+      - "8443:443"
+      # RouterOS API
+      - "8728:8728"
+      # RouterOS API SSL
+      - "8729:8729"
+      # VNC access for GUI
+      - "5900:5900"
+      # Winbox
+      - "8291:8291"
+    environment:
+      - ROUTEROS_VERSION=7.19.4
+    volumes:
+      # Persist RouterOS configuration
+      - routeros_data:/routeros
+    networks:
+      - routeros_net
+
+volumes:
+  routeros_data:
+    driver: local
+
+networks:
+  routeros_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
